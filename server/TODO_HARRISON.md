@@ -5,7 +5,7 @@ Items that need a credential, a human decision, or a captured response before th
 ## Auth / Firebase
 - [ ] Firebase project for CodeDrop (phone auth enabled for NG).
 - [ ] Service-account JSON (or ADC) on the API host. Set `AUTH_MODE=firebase`, `FIREBASE_PROJECT_ID`, and `GOOGLE_APPLICATION_CREDENTIALS` (or `FIREBASE_SERVICE_ACCOUNT_JSON`).
-- [ ] Confirm the same Firebase project will be used by the Expo app (`@react-native-firebase/auth`).
+- [ ] Confirm the same Firebase project will be used by the Expo app (`@react-native-firebase/auth`). Needs `google-services.json` / `GoogleService-Info.plist` on EAS (not in git). Dev app uses `POST /dev/login` until that build exists.
 
 ## Bookie resolvers
 - [ ] **SportyBet:** probe from this host got **HTTP 403 CloudFront**. Need a browser Network capture into `server/fixtures/sportybet-<CODE>.json`.

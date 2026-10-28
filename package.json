@@ -1,0 +1,9 @@
+{
+  "name": "codedrop",
+  "private": true,
+  "workspaces": ["packages/*", "server"],
+  "scripts": {
+    "test": "npm test --workspace=codedrop-server",
+    "typecheck": "npm run typecheck --workspace=@codedrop/shared && npm run typecheck --workspace=codedrop-server"
+  }
+}

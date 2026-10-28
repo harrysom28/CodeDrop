@@ -1,0 +1,31 @@
+{
+  "expo": {
+    "name": "CodeDrop",
+    "slug": "codedrop",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "scheme": "codedrop",
+    "userInterfaceStyle": "dark",
+    "android": {
+      "package": "com.codedrop.app"
+    },
+    "ios": {
+      "bundleIdentifier": "com.codedrop.app"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-font",
+      [
+        "expo-notifications",
+        { "color": "#B8F04A" }
+      ],
+      [
+        "expo-splash-screen",
+        { "backgroundColor": "#0C0F0E" }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}

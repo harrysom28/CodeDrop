@@ -1,0 +1,37 @@
+/** Design tokens. Hard-coded colours in components are not allowed — import from here. */
+export const theme = {
+  bg: '#0C0F0E',
+  surface: '#151918',
+  surfaceSunken: '#0F1312',
+  border: '#262B29',
+  borderStrong: '#3B423F',
+  text: '#EEF2EF',
+  textSecondary: '#C4CCC8',
+  textMuted: '#9AA39F',
+  accent: '#B8F04A',
+  accentOn: '#0C0F0E',
+  accentSurface: '#1B2312',
+  accentBorder: '#2E3D1C',
+  warn: '#F2C77A',
+  warnSurface: '#2A2213',
+  live: '#FF6B5E',
+  loss: '#FF9C8F',
+  info: '#9DB8FF',
+  infoSurface: '#1E2433',
+  pickVerified: '#1E2321',
+  unverifiedBorder: '#4A4232',
+  radius: { card: 12, panel: 16, pill: 999 },
+  space: { 1: 4, 2: 8, 3: 12, 4: 16, 5: 20, 6: 24, 8: 32 },
+  gutter: 16,
+  tap: 44,
+  font: {
+    title: 'Archivo_800ExtraBold',
+    ui: 'IBMPlexSans_400Regular',
+    uiMed: 'IBMPlexSans_500Medium',
+    uiSemi: 'IBMPlexSans_600SemiBold',
+    mono: 'IBMPlexMono_500Medium',
+    monoSemi: 'IBMPlexMono_600SemiBold',
+  },
+} as const;
+
+export type Theme = typeof theme;

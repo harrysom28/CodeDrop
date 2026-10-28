@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { z } from 'zod';
+import { config } from '../config.js';
 import { BOOKIES } from '../core/types.js';
 import { User } from '../models/index.js';
 import { HttpError } from '../errors.js';
@@ -24,6 +25,18 @@ const PatchMe = z
 
 export function meRouter() {
   const r = Router();
+
+  /** Local-only: create/find a user by phone so the Expo app can run without Firebase. */
+  r.post('/dev/login', async (req, res) => {
+    if (config.AUTH_MODE !== 'dev' || config.NODE_ENV === 'production') {
+      throw new HttpError(404, 'Not found');
+    }
+    const body = z.object({ phone: z.string().trim().min(10).max(20) }).parse(req.body);
+    const phone = body.phone.replace(/\s/g, '');
+    let user = await User.findOne({ phone });
+    if (!user) user = await User.create({ phone });
+    res.json(presentUser(user));
+  });
 
   r.get('/me', requireUser, async (req, res) => {
     const user = await User.findById(req.userId).lean();

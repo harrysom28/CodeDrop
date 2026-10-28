@@ -7,17 +7,9 @@ Verified tipster and copy-betting app for Nigerian bettors. Tipsters lock picks 
 ## What's here
 
 ```
-server/               Node.js + TypeScript + Express + MongoDB (same stack as Keke Ride)
-  src/core/           Pure logic, fully unit-tested
-    extractCodes.ts   Finds booking codes + bookie in messy tipster posts
-    commit.ts         Commit–reveal hashing for picks, slip identity for de-duplication
-    settlement.ts     Won/lost/void settlement in units, CLV, "locked before kickoff" rule
-    ranking.ts        Leaderboard: 100-pick minimum, ROI shrunk toward break-even, drawdown
-    bookies/          Booking-code lookup per bookie, with caching and rate limiting
-  src/services/       ingest (post → Spotted slip), picks (lock / present), settle
-  src/telegram/       Reader-account login, slow channel joining, live listener
-  src/routes/         REST API: picks, feed, follows, leaderboard, tipster profiles, channels
-  src/jobs/settle.ts  Settles picks and spotted slips after games finish
+server/               Node.js + TypeScript + Express + MongoDB
+packages/shared/      Zod contracts used by server + app
+app/                  Expo + expo-router (Android first)
 ```
 
 ## Run it
@@ -49,6 +41,7 @@ Auth: `AUTH_MODE=dev` → send `x-user-id: <mongo user id>`. `AUTH_MODE=firebase
 | Method | Path | What |
 |---|---|---|
 | GET | `/health` | Status + bookies we can decode |
+| POST | `/dev/login` | Dev-only: `{phone}` → upsert user (not in production) |
 | GET | `/me` | Current user profile |
 | POST | `/me/onboarding` | `{over18Confirmed: true, favouriteClubs, mainBookie, unitNaira}` |
 | PATCH | `/me` | `{handle?, displayName?}` — handle is unique `[a-z0-9_]{3,20}` |
@@ -91,4 +84,25 @@ npm run telegram:listen
 
 ## Mobile app
 
-Phase 2 — React Native / Expo in `app/`, from the design canvas.
+```bash
+cd app
+cp .env.example .env
+npm install
+npx expo start
+```
+
+Tabs: Feed · Rooms · Leaders · Convert · Me. Local phone auth uses `POST /dev/login` while `AUTH_MODE=dev`. Production Firebase phone auth needs an EAS development build (`@react-native-firebase/auth` is not in Expo Go).
+
+```bash
+cd app && eas build --profile preview
+```
+
+`PLAY_STORE_NOTES.md` · `DEPLOY.md` · CI in `.github/workflows/ci.yml`.
+
+## Docker
+
+```bash
+docker compose up --build
+```
+
+Dokploy services: `api` (`GET /health`), `worker`, `listener`. Compose Mongo/Redis are for local/staging.
