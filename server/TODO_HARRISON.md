@@ -8,8 +8,9 @@ Items that need a credential, a human decision, or a captured response before th
 - [ ] Confirm the same Firebase project will be used by the Expo app (`@react-native-firebase/auth`).
 
 ## Bookie resolvers
-- [ ] SportyBet: confirm share URL + response shape (or drop a saved Network response into `server/fixtures/`). Schema in `src/core/bookies/sportybet.ts` is still unverified.
-- [ ] Bet9ja, BetKing, MSport: same — Load Code in browser → DevTools → Network → save response. Until then they stay behind `ENABLED_BOOKIES`.
+- [ ] **SportyBet:** `npm run bookie:probe -- sportybet <CODE>` from this machine got **HTTP 403 CloudFront** (`Request blocked`). Need a saved response from a real browser on sportybet.com → Load Code → DevTools → Network → copy response JSON into `server/fixtures/sportybet-<CODE>.json`. Then we tighten the zod schema and add a fixture test.
+- [ ] **Bet9ja, BetKing, MSport:** same capture. Stub resolvers exist behind `ENABLED_BOOKIES` + `BET9JA_SHARE_URL` / `BETKING_SHARE_URL` / `MSPORT_SHARE_URL`, but they are not enabled and have no verified URL. `POST /convert` returns per-leg availability once a target catalogue exists; no bookie can mint a converted code yet — need partner APIs or create-code endpoints.
+- [ ] Decision: keep unofficial share URLs or wait for partner APIs before production.
 
 ## Results
 - [ ] API-Football key (`API_FOOTBALL_KEY`) once Phase 1.3 lands.

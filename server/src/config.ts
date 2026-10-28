@@ -21,7 +21,15 @@ const Env = z.object({
   TELEGRAM_JOIN_PER_RUN: z.coerce.number().default(10),
 
   SPORTYBET_SHARE_URL: z.string().optional(),
+  BET9JA_SHARE_URL: z.string().optional(),
+  BETKING_SHARE_URL: z.string().optional(),
+  MSPORT_SHARE_URL: z.string().optional(),
   BOOKIE_MIN_INTERVAL_MS: z.coerce.number().default(1500),
+  /** Comma-separated bookies whose resolvers may run. Unverified ones stay off in production. */
+  ENABLED_BOOKIES: z
+    .string()
+    .default('sportybet')
+    .transform((s) => s.split(',').map((x) => x.trim().toLowerCase()).filter(Boolean)),
 });
 
 export const config = Env.parse(process.env);

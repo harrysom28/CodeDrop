@@ -11,7 +11,8 @@
     "telegram:login": "tsx src/telegram/login.ts",
     "telegram:listen": "tsx src/telegram/listener.ts",
     "telegram:join": "tsx src/telegram/joinChannels.ts",
-    "job:settle": "tsx src/jobs/settle.ts"
+    "job:settle": "tsx src/jobs/settle.ts",
+    "bookie:probe": "tsx src/scripts/bookieProbe.ts"
   },
   "author": "",
   "license": "UNLICENSED",

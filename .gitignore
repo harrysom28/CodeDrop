@@ -5,3 +5,7 @@ dist/
 !.env.example
 *.log
 .DS_Store
+# Probe captures may contain account-specific payloads; keep only reviewed fixtures.
+server/fixtures/*
+!server/fixtures/.gitkeep
+!server/fixtures/*.example.json

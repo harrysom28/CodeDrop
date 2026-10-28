@@ -52,6 +52,7 @@ Auth: `AUTH_MODE=dev` → send `x-user-id: <mongo user id>`. `AUTH_MODE=firebase
 | GET | `/me` | Current user profile |
 | POST | `/me/onboarding` | `{over18Confirmed: true, favouriteClubs, mainBookie, unitNaira}` |
 | PATCH | `/me` | `{handle?, displayName?}` — handle is unique `[a-z0-9_]{3,20}` |
+| POST | `/convert` | `{code, from, to}` — resolve slip; per-leg availability on target (auth required) |
 | GET | `/picks/preview/:bookie/:code` | Legs inside a booking code |
 | POST | `/picks` | Lock a pick `{code, bookie, stakeUnits, note, visibility}` or `{legs, …}` |
 | GET | `/picks/:id` | A pick. VIP content and salt stay hidden until settled |
@@ -66,8 +67,8 @@ Auth: `AUTH_MODE=dev` → send `x-user-id: <mongo user id>`. `AUTH_MODE=firebase
 ## Must be done before real users
 
 - [x] **Auth:** Firebase phone auth wired (`AUTH_MODE=firebase`). Needs project credentials — see `server/TODO_HARRISON.md`.
-- [ ] **SportyBet lookup:** confirm the share URL and response shape in browser dev tools (`src/core/bookies/sportybet.ts`). It's unofficial and will break, so plan to replace it with partner APIs.
-- [ ] **More bookies:** Bet9ja, BetKing, MSport resolvers (each confirmed the same way).
+- [ ] **SportyBet lookup:** probe from this host got CloudFront 403 — need a browser-captured fixture (`npm run bookie:probe`). Schema still unverified.
+- [x] **More bookies:** Bet9ja / BetKing / MSport stub resolvers + `ENABLED_BOOKIES` gate + `POST /convert` + team matching. Still need real share URLs/fixtures.
 - [ ] **Results feed:** pick a provider (API-Football to start) and implement `ResultsProvider` (`src/services/settle.ts`). Until then nothing settles.
 - [ ] **On-chain anchoring** of pick commit hashes (batched Merkle root).
 - [ ] **ID verification** (BVN/NIN via Smile ID / Dojah / Prembly) to set `idVerified`.

@@ -1,0 +1,26 @@
+{
+  "url": "https://www.sportybet.com/api/ng/orders/share/GOOD01",
+  "status": 200,
+  "note": "Example shape used by unit tests. Replace with a real browser Network capture.",
+  "body": {
+    "bizCode": 10000,
+    "data": {
+      "outcomes": [
+        {
+          "eventId": "sr:match:1",
+          "homeTeamName": "Arsenal",
+          "awayTeamName": "Brighton",
+          "estimateStartTime": 1793463600000,
+          "sport": { "category": { "tournament": { "name": "Premier League" } } },
+          "markets": [
+            {
+              "desc": "Over/Under",
+              "specifier": "total=2.5",
+              "outcomes": [{ "desc": "Over 2.5", "odds": "1.62" }]
+            }
+          ]
+        }
+      ]
+    }
+  }
+}
