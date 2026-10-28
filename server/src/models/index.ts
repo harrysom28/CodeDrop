@@ -40,6 +40,16 @@ const UserSchema = new Schema(
     /** What 1 unit means in naira for this user's own stake suggestions. */
     unitNaira: { type: Number, default: 1000 },
     onboardedAt: Date,
+    expoPushTokens: { type: [String], default: [] },
+    pushPrefs: {
+      tipsterPick: { type: Boolean, default: true },
+      betSettled: { type: Boolean, default: true },
+      roomLive: { type: Boolean, default: true },
+      mention: { type: Boolean, default: true },
+      escrow: { type: Boolean, default: true },
+      quietHoursStart: { type: Number, default: 1 },
+      quietHoursEnd: { type: Number, default: 7 },
+    },
   },
   { timestamps: true },
 );

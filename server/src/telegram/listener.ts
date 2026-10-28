@@ -2,9 +2,10 @@ import { Api } from 'telegram';
 import { NewMessage, type NewMessageEvent } from 'telegram/events/index.js';
 import pino from 'pino';
 import { connectDb, mongoSpottedStore } from '../db.js';
-import { Channel, Notification } from '../models/index.js';
+import { Channel } from '../models/index.js';
 import { completeClaim } from '../services/claim.js';
 import { ingestPost } from '../services/ingest.js';
+import { enqueueNotification } from '../services/notifications.js';
 import { buildRegistry } from '../services/resolvers.js';
 import { telegramClient } from './client.js';
 
@@ -56,7 +57,7 @@ async function onMessage(event: NewMessageEvent) {
 
   const claim = await completeClaim(username, text);
   if (claim.claimed && claim.userId) {
-    await Notification.create({
+    await enqueueNotification({
       userId: claim.userId,
       type: 'channel_claimed',
       title: 'Channel claimed',

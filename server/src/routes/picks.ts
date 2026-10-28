@@ -2,9 +2,10 @@ import { Router } from 'express';
 import { Types } from 'mongoose';
 import { z } from 'zod';
 import { BOOKIES, type Leg } from '../core/types.js';
-import { Copy, PickModel, User, UserBet } from '../models/index.js';
+import { Copy, Follow, PickModel, User, UserBet } from '../models/index.js';
 import { HttpError } from '../errors.js';
 import { requireUser } from '../middleware/auth.js';
+import { enqueueNotification } from '../services/notifications.js';
 import { buildLockedPick, PickRejected, presentPick } from '../services/picks.js';
 import type { ResolverRegistry } from '../core/bookies/registry.js';
 
@@ -68,6 +69,20 @@ export function picksRouter(registry: ResolverRegistry) {
       });
       if (tipster.role === 'user') await User.updateOne({ _id: tipster._id }, { $set: { role: 'tipster' } });
       // TODO: anchor pick.commitHash on-chain (batch hashes into a Merkle root every few minutes).
+      const followers = await Follow.find({ tipsterId: tipster._id, alerts: true }, { followerId: 1 }).lean();
+      const name = tipster.handle ?? tipster.displayName ?? 'A tipster you follow';
+      await Promise.all(
+        followers.map((f) =>
+          enqueueNotification({
+            userId: f.followerId,
+            type: 'tipster_pick',
+            tipsterId: tipster.id,
+            title: 'New locked pick',
+            body: `${name} locked a pick · ${pick.totalOdds.toFixed(2)} odds`,
+            data: { pickId: pick.id },
+          }),
+        ),
+      );
       res.status(201).json(presentPick(pick.toObject(), { isOwner: true, isSubscriber: false }));
     } catch (err) {
       if (err instanceof PickRejected) throw new HttpError(422, err.message);
