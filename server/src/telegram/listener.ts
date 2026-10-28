@@ -2,7 +2,8 @@ import { Api } from 'telegram';
 import { NewMessage, type NewMessageEvent } from 'telegram/events/index.js';
 import pino from 'pino';
 import { connectDb, mongoSpottedStore } from '../db.js';
-import { Channel } from '../models/index.js';
+import { Channel, Notification } from '../models/index.js';
+import { completeClaim } from '../services/claim.js';
 import { ingestPost } from '../services/ingest.js';
 import { buildRegistry } from '../services/resolvers.js';
 import { telegramClient } from './client.js';
@@ -28,6 +29,18 @@ async function refreshTracked() {
 await refreshTracked();
 setInterval(() => void refreshTracked().catch((err) => log.error(err)), 5 * 60_000);
 
+// Heartbeat for /health (Phase 1.11). Written every minute.
+setInterval(() => {
+  void Channel.db
+    .collection('jobruns')
+    .updateOne(
+      { job: 'telegram_heartbeat' },
+      { $set: { job: 'telegram_heartbeat', finishedAt: new Date(), ok: true } },
+      { upsert: true },
+    )
+    .catch((err) => log.error({ err }, 'heartbeat failed'));
+}, 60_000);
+
 const client = telegramClient();
 await client.connect();
 log.info('connected to Telegram');
@@ -40,6 +53,18 @@ async function onMessage(event: NewMessageEvent) {
   if (!(chat instanceof Api.Channel) || !chat.username) return;
   const username = chat.username.toLowerCase();
   if (!tracked.has(username)) return;
+
+  const claim = await completeClaim(username, text);
+  if (claim.claimed && claim.userId) {
+    await Notification.create({
+      userId: claim.userId,
+      type: 'channel_claimed',
+      title: 'Channel claimed',
+      body: `@${username} is now linked to your CodeDrop profile. Spotted history stays labelled and off the leaderboard.`,
+      data: { username },
+    });
+    log.info({ channel: username, userId: claim.userId.toString() }, 'channel claimed');
+  }
 
   const outcomes = await ingestPost(
     {

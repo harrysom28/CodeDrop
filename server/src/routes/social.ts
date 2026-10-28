@@ -1,10 +1,12 @@
 import { Router } from 'express';
 import { Types } from 'mongoose';
 import { z } from 'zod';
+import { config } from '../config.js';
 import { rankTipsters, scoreTipster, type SettledPickStat } from '../core/ranking.js';
 import { Channel, Follow, PickModel, SpottedSlip, User } from '../models/index.js';
 import { HttpError } from '../errors.js';
 import { requireAdmin, requireUser } from '../middleware/auth.js';
+import { channelRecordFor, startChannelClaim } from '../services/claim.js';
 import { presentPick } from '../services/picks.js';
 
 function idParam(v: unknown, what: string): Types.ObjectId {
@@ -108,21 +110,31 @@ export function socialRouter() {
 
   /** Private record of a channel, for the claim screen and our recruiting. */
   r.get('/channels/:username/record', requireAdmin, async (req, res) => {
-    const handle = `@${usernameParam(req.params.username)}`;
-    const slips = await SpottedSlip.find({ 'sightings.channel': handle, result: { $in: ['won', 'lost'] } }, { result: 1, totalOdds: 1 }).lean();
-    // Spotted codes carry no stake: score each as 1 unit.
-    const stats = slips.map((s) => ({ stakeUnits: 1, profitUnits: s.result === 'won' ? s.totalOdds - 1 : -1 }));
-    const score = scoreTipster(handle, stats);
-    const hits = slips.filter((s) => s.result === 'won').length;
-    res.json({ channel: handle, ...score, hitRate: slips.length ? hits / slips.length : null });
+    res.json(await channelRecordFor(usernameParam(req.params.username)));
+  });
+
+  r.post('/channels/:username/claim/start', requireUser, async (req, res) => {
+    const out = await startChannelClaim(usernameParam(req.params.username), req.userId!);
+    res.json(out);
+  });
+
+  /** Claimant's Spotted history for their claimed channel (never mixed into leaderboard). */
+  r.get('/me/channel-record', requireUser, async (req, res) => {
+    const channel = await Channel.findOne({ claimedBy: req.userId, source: 'telegram' }).lean();
+    if (!channel) throw new HttpError(404, 'No claimed channel');
+    res.json(await channelRecordFor(channel.username));
   });
 
   /**
    * Owner asked to be removed: stop ingesting and hide everything from them.
-   * Admin-only so nobody can remove a rival's channel; requests come in via the claim screen and support.
+   * Signed-in claimant can opt out their own channel; admins can opt out any.
    */
-  r.post('/channels/:username/opt-out', requireAdmin, async (req, res) => {
+  r.post('/channels/:username/opt-out', requireUser, async (req, res) => {
     const username = usernameParam(req.params.username);
+    const channel = await Channel.findOne({ source: 'telegram', username });
+    const isAdmin = config.ADMIN_USER_IDS.includes(req.userId!.toString());
+    const isOwner = channel?.claimedBy?.equals(req.userId!) || channel?.claimRequestedBy?.equals(req.userId!);
+    if (!isAdmin && !isOwner) throw new HttpError(403, 'Only the claimant or an admin can opt out');
     await Channel.updateOne({ source: 'telegram', username }, { $set: { optedOut: true, enabled: false } }, { upsert: true });
     await SpottedSlip.updateMany({}, { $pull: { sightings: { channel: `@${username}` } } });
     await SpottedSlip.deleteMany({ 'firstSighting.channel': `@${username}`, sightings: { $size: 0 } });

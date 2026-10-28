@@ -134,6 +134,8 @@ const ChannelSchema = new Schema(
     joinedAt: Date,
     /** Set when the owner claims the channel through the claim flow. */
     claimedBy: { type: Schema.Types.ObjectId, ref: 'User' },
+    /** User who started the claim; promoted to claimedBy when the verify line is seen. */
+    claimRequestedBy: { type: Schema.Types.ObjectId, ref: 'User' },
     claimToken: String,
     /** Owner asked to be removed: never ingest or show again. */
     optedOut: { type: Boolean, default: false },
@@ -141,6 +143,7 @@ const ChannelSchema = new Schema(
   { timestamps: true },
 );
 ChannelSchema.index({ source: 1, username: 1 }, { unique: true });
+ChannelSchema.index({ claimToken: 1 }, { sparse: true });
 
 const CodeCacheSchema = new Schema(
   {
@@ -171,6 +174,23 @@ const UserBetSchema = new Schema(
   { timestamps: true },
 );
 UserBetSchema.index({ userId: 1, settledAt: -1 });
+
+const NotificationSchema = new Schema(
+  {
+    userId: { type: Schema.Types.ObjectId, ref: 'User', required: true, index: true },
+    type: {
+      type: String,
+      enum: ['channel_claimed', 'tipster_pick', 'bet_settled', 'room_live', 'mention', 'escrow'],
+      required: true,
+    },
+    title: { type: String, required: true },
+    body: { type: String, required: true },
+    data: Schema.Types.Mixed,
+    readAt: Date,
+    pushedAt: Date,
+  },
+  { timestamps: true },
+);
 
 const OddsSnapshotSchema = new Schema(
   {
@@ -210,6 +230,7 @@ export const SpottedSlip = mongoose.model('SpottedSlip', SpottedSlipSchema);
 export const Channel = mongoose.model('Channel', ChannelSchema);
 export const CodeCache = mongoose.model('CodeCache', CodeCacheSchema);
 export const UserBet = mongoose.model('UserBet', UserBetSchema);
+export const Notification = mongoose.model('Notification', NotificationSchema);
 export const OddsSnapshot = mongoose.model('OddsSnapshot', OddsSnapshotSchema);
 export const JobRun = mongoose.model('JobRun', JobRunSchema);
 
