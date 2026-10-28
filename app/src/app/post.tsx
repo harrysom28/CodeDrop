@@ -1,4 +1,4 @@
-import { Body, Button, Card, Mono, Screen } from '@/components/ui';
+import { Body, Button, Card, Mono, Screen, Title } from '@/components/ui';
 import { apiGet, apiPost } from '@/lib/api';
 import { track } from '@/lib/analytics';
 import { theme } from '@/theme';
