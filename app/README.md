@@ -1,10 +1,10 @@
 # CodeDrop Android app
 
-Expo SDK 58, expo-router, dark theme only.
+Expo SDK 58, expo-router, dark theme only. Use **Node 22.13+ / 24.3+ / 26+** (not Node 25 — outside Expo’s engine range).
 
 ```bash
 cp .env.example .env
-npm install
+npm ci
 npx expo start
 ```
 
