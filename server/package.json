@@ -7,11 +7,12 @@
     "start": "node dist/index.js",
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "tsx --test test/*.test.ts",
+    "test": "tsx --test --test-concurrency=1 test/*.test.ts",
     "telegram:login": "tsx src/telegram/login.ts",
     "telegram:listen": "tsx src/telegram/listener.ts",
     "telegram:join": "tsx src/telegram/joinChannels.ts",
     "job:settle": "tsx src/jobs/settle.ts",
+    "worker": "tsx src/worker.ts",
     "bookie:probe": "tsx src/scripts/bookieProbe.ts"
   },
   "author": "",
@@ -21,6 +22,7 @@
     "express": "^5.3.0",
     "firebase-admin": "^14.5.0",
     "mongoose": "^8.24.7",
+    "node-cron": "^4.6.0",
     "pino": "^10.4.0",
     "telegram": "^2.26.22",
     "zod": "^4.6.7"
@@ -28,6 +30,7 @@
   "devDependencies": {
     "@types/express": "^5.0.6",
     "@types/node": "^26.6.5",
+    "@types/node-cron": "^3.0.11",
     "tsx": "^4.23.15",
     "typescript": "^5.9.3"
   },

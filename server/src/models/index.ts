@@ -154,6 +154,36 @@ CodeCacheSchema.index({ bookie: 1, code: 1 }, { unique: true });
 // Codes expire once games are played; keep misses and hits for 7 days.
 CodeCacheSchema.index({ createdAt: 1 }, { expireAfterSeconds: 7 * 24 * 3600 });
 
+const OddsSnapshotSchema = new Schema(
+  {
+    pickId: { type: Schema.Types.ObjectId, ref: 'Pick', required: true, index: true },
+    bookie: { type: String, enum: BOOKIES, required: true },
+    code: { type: String, required: true },
+    capturedAt: { type: Date, required: true },
+    legs: [
+      {
+        eventId: String,
+        market: String,
+        selection: String,
+        odds: Number,
+        kickoff: Date,
+      },
+    ],
+  },
+  { timestamps: true },
+);
+OddsSnapshotSchema.index({ capturedAt: 1 }, { expireAfterSeconds: 30 * 24 * 3600 });
+
+const JobRunSchema = new Schema(
+  {
+    job: { type: String, required: true, index: true },
+    finishedAt: { type: Date, required: true },
+    ok: { type: Boolean, required: true },
+    detail: Schema.Types.Mixed,
+  },
+  { timestamps: true },
+);
+
 export const User = mongoose.model('User', UserSchema);
 export const Follow = mongoose.model('Follow', FollowSchema);
 export const PickModel = mongoose.model('Pick', PickSchema);
@@ -161,6 +191,8 @@ export const Copy = mongoose.model('Copy', CopySchema);
 export const SpottedSlip = mongoose.model('SpottedSlip', SpottedSlipSchema);
 export const Channel = mongoose.model('Channel', ChannelSchema);
 export const CodeCache = mongoose.model('CodeCache', CodeCacheSchema);
+export const OddsSnapshot = mongoose.model('OddsSnapshot', OddsSnapshotSchema);
+export const JobRun = mongoose.model('JobRun', JobRunSchema);
 
 export type PickDoc = InferSchemaType<typeof PickSchema> & { _id: Types.ObjectId };
 export type SpottedSlipDoc = InferSchemaType<typeof SpottedSlipSchema> & { _id: Types.ObjectId };

@@ -13,7 +13,7 @@ Items that need a credential, a human decision, or a captured response before th
 - [ ] Decision: keep unofficial share URLs or wait for partner APIs before production.
 
 ## Results
-- [ ] API-Football key (`API_FOOTBALL_KEY`) once Phase 1.3 lands.
+- [ ] API-Football / api-sports.io key (`API_FOOTBALL_KEY`). Provider + market mapper are wired; without the key the worker keeps legs pending. Closing odds for CLV come only from our own pre-kickoff bookie snapshots — API-Football odds-at-close is a paid add-on we are not guessing.
 
 ## Payments / ID / anchoring
 - [ ] Paystack secret + webhook secret (Phase 1.8).

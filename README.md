@@ -69,7 +69,7 @@ Auth: `AUTH_MODE=dev` → send `x-user-id: <mongo user id>`. `AUTH_MODE=firebase
 - [x] **Auth:** Firebase phone auth wired (`AUTH_MODE=firebase`). Needs project credentials — see `server/TODO_HARRISON.md`.
 - [ ] **SportyBet lookup:** probe from this host got CloudFront 403 — need a browser-captured fixture (`npm run bookie:probe`). Schema still unverified.
 - [x] **More bookies:** Bet9ja / BetKing / MSport stub resolvers + `ENABLED_BOOKIES` gate + `POST /convert` + team matching. Still need real share URLs/fixtures.
-- [ ] **Results feed:** pick a provider (API-Football to start) and implement `ResultsProvider` (`src/services/settle.ts`). Until then nothing settles.
+- [x] **Results feed:** API-Football provider + market mapper (1X2, DC, O/U, BTTS, DNB), admin manual settle, worker cron, odds snapshots for CLV. Needs `API_FOOTBALL_KEY`.
 - [ ] **On-chain anchoring** of pick commit hashes (batched Merkle root).
 - [ ] **ID verification** (BVN/NIN via Smile ID / Dojah / Prembly) to set `idVerified`.
 - [ ] **Subscriptions + escrow** for VIP picks, wallet (Paystack), responsible-gambling limits.

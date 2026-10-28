@@ -30,6 +30,9 @@ const Env = z.object({
     .string()
     .default('sportybet')
     .transform((s) => s.split(',').map((x) => x.trim().toLowerCase()).filter(Boolean)),
+
+  /** api-sports.io / API-Football key. Without it, settlement stays pending. */
+  API_FOOTBALL_KEY: z.string().optional(),
 });
 
 export const config = Env.parse(process.env);

@@ -10,7 +10,7 @@ import { upsertFirebaseUser, presentUser } from '../src/services/users.js';
 import { clearCollections, startTestMongo, stopTestMongo } from './helpers/mongo.js';
 
 before(async () => {
-  await startTestMongo();
+  await startTestMongo('me');
 });
 
 after(async () => {
