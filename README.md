@@ -26,7 +26,8 @@ server/               Node.js + TypeScript + Express + MongoDB (same stack as Ke
 cd server
 cp .env.example .env          # fill in MONGODB_URI etc.
 npm install
-npm test                      # 24 tests
+npm test                      # needs a local mongod; override with MONGODB_TEST_URI if not on :27018
+npm run typecheck
 npm run dev                   # API on :4000
 ```
 
@@ -41,11 +42,16 @@ npm run dev                   # API on :4000
 
 Only public channels are read. Owners can be removed with `POST /channels/:username/opt-out`.
 
-## API (dev auth: send `x-user-id: <mongo user id>`)
+## API
+
+Auth: `AUTH_MODE=dev` → send `x-user-id: <mongo user id>`. `AUTH_MODE=firebase` → `Authorization: Bearer <Firebase ID token>` (upserts the user on first request).
 
 | Method | Path | What |
 |---|---|---|
 | GET | `/health` | Status + bookies we can decode |
+| GET | `/me` | Current user profile |
+| POST | `/me/onboarding` | `{over18Confirmed: true, favouriteClubs, mainBookie, unitNaira}` |
+| PATCH | `/me` | `{handle?, displayName?}` — handle is unique `[a-z0-9_]{3,20}` |
 | GET | `/picks/preview/:bookie/:code` | Legs inside a booking code |
 | POST | `/picks` | Lock a pick `{code, bookie, stakeUnits, note, visibility}` or `{legs, …}` |
 | GET | `/picks/:id` | A pick. VIP content and salt stay hidden until settled |
@@ -59,7 +65,7 @@ Only public channels are read. Owners can be removed with `POST /channels/:usern
 
 ## Must be done before real users
 
-- [ ] **Auth:** replace dev `x-user-id` with Firebase phone auth (`src/middleware/auth.ts`).
+- [x] **Auth:** Firebase phone auth wired (`AUTH_MODE=firebase`). Needs project credentials — see `server/TODO_HARRISON.md`.
 - [ ] **SportyBet lookup:** confirm the share URL and response shape in browser dev tools (`src/core/bookies/sportybet.ts`). It's unofficial and will break, so plan to replace it with partner APIs.
 - [ ] **More bookies:** Bet9ja, BetKing, MSport resolvers (each confirmed the same way).
 - [ ] **Results feed:** pick a provider (API-Football to start) and implement `ResultsProvider` (`src/services/settle.ts`). Until then nothing settles.
@@ -68,6 +74,8 @@ Only public channels are read. Owners can be removed with `POST /channels/:usern
 - [ ] **Subscriptions + escrow** for VIP picks, wallet (Paystack), responsible-gambling limits.
 - [ ] **Rooms** (match chat): realtime service, moderation.
 - [ ] Legal review of subscriptions and anything touching stakes.
+
+Blocked credentials and decisions live in `server/TODO_HARRISON.md`.
 
 ## Mobile app
 

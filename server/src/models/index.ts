@@ -26,6 +26,8 @@ const SlipSchema = new Schema(
 
 const UserSchema = new Schema(
   {
+    /** Firebase Auth uid. Sparse unique so older/dev users without one still work. */
+    firebaseUid: { type: String, unique: true, sparse: true, index: true },
     phone: { type: String, unique: true, sparse: true },
     handle: { type: String, unique: true, sparse: true, lowercase: true, trim: true },
     displayName: String,
@@ -37,6 +39,7 @@ const UserSchema = new Schema(
     favouriteClubs: [String],
     /** What 1 unit means in naira for this user's own stake suggestions. */
     unitNaira: { type: Number, default: 1000 },
+    onboardedAt: Date,
   },
   { timestamps: true },
 );

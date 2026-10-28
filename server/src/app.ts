@@ -1,6 +1,8 @@
 import express, { type NextFunction, type Request, type Response } from 'express';
 import { ZodError } from 'zod';
-import { authenticate, HttpError } from './middleware/auth.js';
+import { HttpError } from './errors.js';
+import { authenticate } from './middleware/auth.js';
+import { meRouter } from './routes/me.js';
 import { picksRouter } from './routes/picks.js';
 import { socialRouter } from './routes/social.js';
 import type { ResolverRegistry } from './core/bookies/registry.js';
@@ -14,6 +16,7 @@ export function createApp(deps: { registry: ResolverRegistry }) {
   app.get('/health', (_req, res) => {
     res.json({ ok: true, bookies: deps.registry.supported() });
   });
+  app.use(meRouter());
   app.use('/picks', picksRouter(deps.registry));
   app.use('/', socialRouter());
 

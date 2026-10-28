@@ -3,7 +3,8 @@ import { Types } from 'mongoose';
 import { z } from 'zod';
 import { rankTipsters, scoreTipster, type SettledPickStat } from '../core/ranking.js';
 import { Channel, Follow, PickModel, SpottedSlip, User } from '../models/index.js';
-import { HttpError, requireAdmin, requireUser } from '../middleware/auth.js';
+import { HttpError } from '../errors.js';
+import { requireAdmin, requireUser } from '../middleware/auth.js';
 import { presentPick } from '../services/picks.js';
 
 function idParam(v: unknown, what: string): Types.ObjectId {

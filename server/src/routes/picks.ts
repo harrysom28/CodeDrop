@@ -3,7 +3,8 @@ import { Types } from 'mongoose';
 import { z } from 'zod';
 import { BOOKIES, type Leg } from '../core/types.js';
 import { Copy, PickModel, User } from '../models/index.js';
-import { HttpError, requireUser } from '../middleware/auth.js';
+import { HttpError } from '../errors.js';
+import { requireUser } from '../middleware/auth.js';
 import { buildLockedPick, PickRejected, presentPick } from '../services/picks.js';
 import type { ResolverRegistry } from '../core/bookies/registry.js';
 
