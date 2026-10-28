@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { Types } from 'mongoose';
 import { z } from 'zod';
 import { BOOKIES, type Leg } from '../core/types.js';
-import { Copy, PickModel, User } from '../models/index.js';
+import { Copy, PickModel, User, UserBet } from '../models/index.js';
 import { HttpError } from '../errors.js';
 import { requireUser } from '../middleware/auth.js';
 import { buildLockedPick, PickRejected, presentPick } from '../services/picks.js';
@@ -86,7 +86,13 @@ export function picksRouter(registry: ResolverRegistry) {
 
   /** Record a copy: feeds copy counts, the follower's own tracker, and later affiliate attribution. */
   r.post('/:id/copy', requireUser, async (req, res) => {
-    const body = z.object({ bookie: z.enum(BOOKIES), oddsAtCopy: z.number().optional() }).parse(req.body);
+    const body = z
+      .object({
+        bookie: z.enum(BOOKIES),
+        oddsAtCopy: z.number().optional(),
+        stakeNaira: z.number().min(1).max(10_000_000).optional(),
+      })
+      .parse(req.body);
     const pick = await PickModel.findOneAndUpdate(
       { _id: req.params.id, result: 'pending', firstKickoff: { $gt: new Date() } },
       { $inc: { copyCount: 1 } },
@@ -94,7 +100,21 @@ export function picksRouter(registry: ResolverRegistry) {
     ).lean();
     if (!pick) throw new HttpError(409, 'Copy closed: games have started or pick not found');
     await Copy.create({ userId: req.userId, pickId: pick._id, bookie: body.bookie, oddsAtCopy: body.oddsAtCopy });
-    res.json({ copyCount: pick.copyCount });
+    let betId: string | undefined;
+    if (body.stakeNaira) {
+      const bet = await UserBet.create({
+        userId: req.userId,
+        bookie: body.bookie,
+        code: pick.code,
+        legs: pick.legs,
+        stakeNaira: body.stakeNaira,
+        source: 'copied',
+        pickId: pick._id,
+        firstKickoff: pick.firstKickoff,
+      });
+      betId = bet.id;
+    }
+    res.json({ copyCount: pick.copyCount, betId });
   });
 
   return r;

@@ -53,6 +53,10 @@ Auth: `AUTH_MODE=dev` → send `x-user-id: <mongo user id>`. `AUTH_MODE=firebase
 | POST | `/me/onboarding` | `{over18Confirmed: true, favouriteClubs, mainBookie, unitNaira}` |
 | PATCH | `/me` | `{handle?, displayName?}` — handle is unique `[a-z0-9_]{3,20}` |
 | POST | `/convert` | `{code, from, to}` — resolve slip; per-leg availability on target (auth required) |
+| POST | `/me/bets` | Track a bet by code `{code, bookie, stakeNaira, source}` |
+| GET | `/me/bets?status=open\|settled` | User bet list |
+| GET | `/me/bets/summary?month=YYYY-MM` | P/L split + insight line |
+| POST | `/admin/legs/settle` | Manual leg result (admin) |
 | GET | `/picks/preview/:bookie/:code` | Legs inside a booking code |
 | POST | `/picks` | Lock a pick `{code, bookie, stakeUnits, note, visibility}` or `{legs, …}` |
 | GET | `/picks/:id` | A pick. VIP content and salt stay hidden until settled |

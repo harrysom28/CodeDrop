@@ -1,5 +1,6 @@
 import { connectDb } from '../db.js';
-import { JobRun, PickModel, SpottedSlip } from '../models/index.js';
+import { JobRun, PickModel, SpottedSlip, UserBet } from '../models/index.js';
+import { computeBetReturn } from '../services/bets.js';
 import { applyClosingOddsFromSnapshots } from '../services/oddsSnapshots.js';
 import { buildResultsProvider } from '../services/results/index.js';
 import { settleOne, type ResultsProvider } from '../services/settle.js';
@@ -39,6 +40,23 @@ export async function runSettlement(provider: ResultsProvider, now = new Date())
     await SpottedSlip.updateOne(
       { _id: s._id },
       { $set: { 'slip.legs': out.legs, result: out.result, settledAt: now } },
+    );
+    settled++;
+  }
+
+  for await (const bet of UserBet.find({ result: 'pending', firstKickoff: { $lt: cutoff } }).lean().cursor()) {
+    const out = await settleOne({ legs: plainLegs(bet.legs as unknown as Leg[]), stakeUnits: 1 }, provider);
+    if (out.result === 'pending') continue;
+    await UserBet.updateOne(
+      { _id: bet._id },
+      {
+        $set: {
+          legs: out.legs,
+          result: out.result,
+          returnNaira: computeBetReturn(out.legs, bet.stakeNaira, out.result),
+          settledAt: now,
+        },
+      },
     );
     settled++;
   }

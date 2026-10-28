@@ -3,6 +3,7 @@ import { ZodError } from 'zod';
 import { HttpError } from './errors.js';
 import { authenticate } from './middleware/auth.js';
 import { adminRouter } from './routes/admin.js';
+import { betsRouter } from './routes/bets.js';
 import { convertRouter } from './routes/convert.js';
 import { meRouter } from './routes/me.js';
 import { picksRouter } from './routes/picks.js';
@@ -19,6 +20,7 @@ export function createApp(deps: { registry: ResolverRegistry }) {
     res.json({ ok: true, bookies: deps.registry.supported() });
   });
   app.use(meRouter());
+  app.use(betsRouter(deps.registry));
   app.use(convertRouter(deps.registry));
   app.use(adminRouter());
   app.use('/picks', picksRouter(deps.registry));
