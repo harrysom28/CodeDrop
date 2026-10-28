@@ -1,0 +1,163 @@
+import mongoose, { Schema, type InferSchemaType, type Types } from 'mongoose';
+import { BOOKIES } from '../core/types.js';
+
+const LegSchema = new Schema(
+  {
+    eventId: { type: String, required: true },
+    homeTeam: { type: String, required: true },
+    awayTeam: { type: String, required: true },
+    league: String,
+    market: { type: String, required: true },
+    selection: { type: String, required: true },
+    odds: { type: Number, required: true },
+    kickoff: { type: Date, required: true },
+    result: { type: String, enum: ['pending', 'won', 'lost', 'void'], default: 'pending' },
+    closingOdds: Number,
+  },
+  { _id: false },
+);
+
+const SlipSchema = new Schema(
+  { bookie: { type: String, enum: BOOKIES, required: true }, code: { type: String, required: true }, legs: [LegSchema] },
+  { _id: false },
+);
+
+// ── Users & tipsters ─────────────────────────────────────────────────────────
+
+const UserSchema = new Schema(
+  {
+    phone: { type: String, unique: true, sparse: true },
+    handle: { type: String, unique: true, sparse: true, lowercase: true, trim: true },
+    displayName: String,
+    role: { type: String, enum: ['user', 'tipster', 'admin'], default: 'user' },
+    /** BVN/NIN check passed: required to rank on leaderboards or earn. */
+    idVerified: { type: Boolean, default: false },
+    over18Confirmed: { type: Boolean, default: false },
+    mainBookie: { type: String, enum: BOOKIES },
+    favouriteClubs: [String],
+    /** What 1 unit means in naira for this user's own stake suggestions. */
+    unitNaira: { type: Number, default: 1000 },
+  },
+  { timestamps: true },
+);
+
+const FollowSchema = new Schema(
+  {
+    followerId: { type: Schema.Types.ObjectId, ref: 'User', required: true, index: true },
+    tipsterId: { type: Schema.Types.ObjectId, ref: 'User', required: true, index: true },
+    alerts: { type: Boolean, default: true },
+  },
+  { timestamps: true },
+);
+FollowSchema.index({ followerId: 1, tipsterId: 1 }, { unique: true });
+
+// ── Verified picks (commit–reveal) ───────────────────────────────────────────
+
+const PickSchema = new Schema(
+  {
+    tipsterId: { type: Schema.Types.ObjectId, ref: 'User', required: true, index: true },
+    bookie: { type: String, enum: BOOKIES },
+    code: String,
+    legs: { type: [LegSchema], required: true },
+    totalOdds: { type: Number, required: true },
+    stakeUnits: { type: Number, required: true, min: 0.1, max: 10 },
+    note: { type: String, maxlength: 500 },
+    visibility: { type: String, enum: ['public', 'vip'], default: 'public' },
+    verification: { type: String, enum: ['pick', 'receipt', 'stake'], default: 'pick' },
+    lockedAt: { type: Date, required: true },
+    firstKickoff: { type: Date, required: true, index: true },
+    commitHash: { type: String, required: true, unique: true },
+    /** Secret until reveal; never returned by default queries. */
+    salt: { type: String, required: true, select: false },
+    revealed: { type: Boolean, default: false },
+    /** Where the commit hash was anchored on-chain, once that is wired. */
+    anchorTx: String,
+    result: { type: String, enum: ['pending', 'won', 'lost', 'void'], default: 'pending', index: true },
+    profitUnits: { type: Number, default: 0 },
+    clv: Number,
+    settledAt: Date,
+    copyCount: { type: Number, default: 0 },
+  },
+  { timestamps: true },
+);
+
+const CopySchema = new Schema(
+  {
+    userId: { type: Schema.Types.ObjectId, ref: 'User', required: true, index: true },
+    pickId: { type: Schema.Types.ObjectId, ref: 'Pick' },
+    spottedSlipKey: String,
+    bookie: { type: String, enum: BOOKIES },
+    oddsAtCopy: Number,
+  },
+  { timestamps: true },
+);
+
+// ── Spotted codes from Telegram / X ──────────────────────────────────────────
+
+const SightingSchema = new Schema(
+  {
+    source: { type: String, enum: ['telegram', 'x'], required: true },
+    channel: { type: String, required: true },
+    messageId: { type: String, required: true },
+    url: String,
+    postedAt: { type: Date, required: true },
+    bookie: { type: String, enum: BOOKIES, required: true },
+    code: { type: String, required: true },
+  },
+  { _id: false },
+);
+
+const SpottedSlipSchema = new Schema(
+  {
+    slipKey: { type: String, required: true, unique: true },
+    slip: { type: SlipSchema, required: true },
+    totalOdds: { type: Number, required: true },
+    firstKickoff: { type: Date, required: true, index: true },
+    firstSighting: { type: SightingSchema, required: true },
+    sightings: { type: [SightingSchema], default: [] },
+    result: { type: String, enum: ['pending', 'won', 'lost', 'void'], default: 'pending', index: true },
+    settledAt: Date,
+  },
+  { timestamps: true },
+);
+SpottedSlipSchema.index({ 'sightings.channel': 1, result: 1 });
+
+const ChannelSchema = new Schema(
+  {
+    source: { type: String, enum: ['telegram', 'x'], default: 'telegram' },
+    username: { type: String, required: true, lowercase: true, trim: true },
+    title: String,
+    enabled: { type: Boolean, default: true },
+    joinedAt: Date,
+    /** Set when the owner claims the channel through the claim flow. */
+    claimedBy: { type: Schema.Types.ObjectId, ref: 'User' },
+    claimToken: String,
+    /** Owner asked to be removed: never ingest or show again. */
+    optedOut: { type: Boolean, default: false },
+  },
+  { timestamps: true },
+);
+ChannelSchema.index({ source: 1, username: 1 }, { unique: true });
+
+const CodeCacheSchema = new Schema(
+  {
+    bookie: { type: String, enum: BOOKIES, required: true },
+    code: { type: String, required: true },
+    slip: { type: SlipSchema, default: null },
+  },
+  { timestamps: true },
+);
+CodeCacheSchema.index({ bookie: 1, code: 1 }, { unique: true });
+// Codes expire once games are played; keep misses and hits for 7 days.
+CodeCacheSchema.index({ createdAt: 1 }, { expireAfterSeconds: 7 * 24 * 3600 });
+
+export const User = mongoose.model('User', UserSchema);
+export const Follow = mongoose.model('Follow', FollowSchema);
+export const PickModel = mongoose.model('Pick', PickSchema);
+export const Copy = mongoose.model('Copy', CopySchema);
+export const SpottedSlip = mongoose.model('SpottedSlip', SpottedSlipSchema);
+export const Channel = mongoose.model('Channel', ChannelSchema);
+export const CodeCache = mongoose.model('CodeCache', CodeCacheSchema);
+
+export type PickDoc = InferSchemaType<typeof PickSchema> & { _id: Types.ObjectId };
+export type SpottedSlipDoc = InferSchemaType<typeof SpottedSlipSchema> & { _id: Types.ObjectId };

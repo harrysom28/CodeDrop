@@ -1,0 +1,37 @@
+{
+  "name": "codedrop-server",
+  "version": "1.0.0",
+  "description": "CodeDrop backend: verified picks, Telegram code ingest, settlement and leaderboards",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "start": "node dist/index.js",
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "tsx --test test/*.test.ts",
+    "telegram:login": "tsx src/telegram/login.ts",
+    "telegram:listen": "tsx src/telegram/listener.ts",
+    "telegram:join": "tsx src/telegram/joinChannels.ts",
+    "job:settle": "tsx src/jobs/settle.ts"
+  },
+  "author": "",
+  "license": "UNLICENSED",
+  "dependencies": {
+    "dotenv": "^18.0.9",
+    "express": "^5.3.0",
+    "mongoose": "^8.24.7",
+    "pino": "^10.4.0",
+    "telegram": "^2.26.22",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "@types/node": "^26.6.5",
+    "tsx": "^4.23.15",
+    "typescript": "^5.9.3"
+  },
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  }
+}
