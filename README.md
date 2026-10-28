@@ -70,18 +70,25 @@ Auth: `AUTH_MODE=dev` → send `x-user-id: <mongo user id>`. `AUTH_MODE=firebase
 
 ## Must be done before real users
 
-- [x] **Auth:** Firebase phone auth wired (`AUTH_MODE=firebase`). Needs project credentials — see `server/TODO_HARRISON.md`.
-- [ ] **SportyBet lookup:** probe from this host got CloudFront 403 — need a browser-captured fixture (`npm run bookie:probe`). Schema still unverified.
-- [x] **More bookies:** Bet9ja / BetKing / MSport stub resolvers + `ENABLED_BOOKIES` gate + `POST /convert` + team matching. Still need real share URLs/fixtures.
-- [x] **Results feed:** API-Football provider + market mapper (1X2, DC, O/U, BTTS, DNB), admin manual settle, worker cron, odds snapshots for CLV. Needs `API_FOOTBALL_KEY`.
-- [ ] **On-chain anchoring** of pick commit hashes (batched Merkle root).
-- [ ] **ID verification** (BVN/NIN via Smile ID / Dojah / Prembly) to set `idVerified`.
-- [ ] **Subscriptions + escrow** for VIP picks, wallet (Paystack), responsible-gambling limits.
-- [ ] **Rooms** (match chat): realtime service, moderation.
-- [ ] Legal review of subscriptions and anything touching stakes.
+- [x] **Auth:** Firebase phone auth wired (`AUTH_MODE=firebase`). Needs project credentials.
+- [ ] **SportyBet lookup:** CloudFront 403 from this host — need a browser-captured fixture.
+- [x] **More bookies:** stubs + `ENABLED_BOOKIES` + `POST /convert` + team matching (need real fixtures).
+- [x] **Results feed:** API-Football mapper + admin settle + worker + odds snapshots (needs key).
+- [x] **On-chain anchoring:** Merkle roots/proofs offline; live Base write behind `ANCHORING_ENABLED`.
+- [x] **ID verification:** Dojah/Smile interface (stub until keys); never stores raw BVN/NIN.
+- [x] **Subscriptions + escrow + wallet:** double-entry ledger; `SUBSCRIPTIONS_ENABLED=false` by default.
+- [x] **Rooms:** Socket.IO + REST, slow mode, reports, word filter, moderation queue.
+- [ ] Legal review of subscriptions before enabling in production.
+- [ ] Paystack / Firebase / API-Football / ID-provider credentials (see `server/TODO_HARRISON.md`).
 
-Blocked credentials and decisions live in `server/TODO_HARRISON.md`.
+## Processes
+
+```bash
+npm run dev       # API + Socket.IO
+npm run worker    # settlement, odds snapshots, escrow, anchoring
+npm run telegram:listen
+```
 
 ## Mobile app
 
-To be built with React Native / Expo in `app/`, from the design canvas.
+Phase 2 — React Native / Expo in `app/`, from the design canvas.
