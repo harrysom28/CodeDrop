@@ -34,6 +34,9 @@ const UserSchema = new Schema(
     role: { type: String, enum: ['user', 'tipster', 'admin'], default: 'user' },
     /** BVN/NIN check passed: required to rank on leaderboards or earn. */
     idVerified: { type: Boolean, default: false },
+    /** Provider name + opaque reference — never store raw BVN/NIN. */
+    idProvider: String,
+    idProviderRef: String,
     over18Confirmed: { type: Boolean, default: false },
     mainBookie: { type: String, enum: BOOKIES },
     favouriteClubs: [String],
@@ -85,6 +88,8 @@ const PickSchema = new Schema(
     revealed: { type: Boolean, default: false },
     /** Where the commit hash was anchored on-chain, once that is wired. */
     anchorTx: String,
+    merkleRoot: String,
+    merkleProof: [String],
     result: { type: String, enum: ['pending', 'won', 'lost', 'void'], default: 'pending', index: true },
     profitUnits: { type: Number, default: 0 },
     clv: Number,

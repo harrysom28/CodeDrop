@@ -99,6 +99,18 @@ export function picksRouter(registry: ResolverRegistry) {
     res.json(presentPick(pick, { isOwner, isSubscriber: false }));
   });
 
+  r.get('/:id/proof', async (req, res) => {
+    if (!Types.ObjectId.isValid(req.params.id)) throw new HttpError(404, 'Pick not found');
+    const pick = await PickModel.findById(req.params.id).lean();
+    if (!pick) throw new HttpError(404, 'Pick not found');
+    res.json({
+      commitHash: pick.commitHash,
+      merkleRoot: pick.merkleRoot ?? null,
+      merkleProof: pick.merkleProof ?? [],
+      anchorTx: pick.anchorTx ?? null,
+    });
+  });
+
   /** Record a copy: feeds copy counts, the follower's own tracker, and later affiliate attribution. */
   r.post('/:id/copy', requireUser, async (req, res) => {
     const body = z

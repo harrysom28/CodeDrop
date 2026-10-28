@@ -33,6 +33,34 @@ const Env = z.object({
 
   /** api-sports.io / API-Football key. Without it, settlement stays pending. */
   API_FOOTBALL_KEY: z.string().optional(),
+
+  REDIS_URL: z.string().optional(),
+  CORS_ORIGINS: z
+    .string()
+    .default('')
+    .transform((s) => s.split(',').map((x) => x.trim()).filter(Boolean)),
+
+  SUBSCRIPTIONS_ENABLED: z
+    .string()
+    .default('false')
+    .transform((s) => s === 'true' || s === '1'),
+  PLATFORM_FEE_BPS: z.coerce.number().int().min(0).max(10_000).default(2000),
+  ANCHORING_ENABLED: z
+    .string()
+    .default('false')
+    .transform((s) => s === 'true' || s === '1'),
+  ANCHOR_PRIVATE_KEY: z.string().optional(),
+  ANCHOR_RPC_URL: z.string().optional(),
+  ANCHOR_CHAIN_ID: z.coerce.number().optional(),
+
+  PAYSTACK_SECRET_KEY: z.string().optional(),
+  PAYSTACK_WEBHOOK_SECRET: z.string().optional(),
+
+  ID_VERIFIER: z.enum(['none', 'dojah', 'smile']).default('none'),
+  DOJAH_APP_ID: z.string().optional(),
+  DOJAH_SECRET_KEY: z.string().optional(),
+  SMILE_API_KEY: z.string().optional(),
+  SMILE_PARTNER_ID: z.string().optional(),
 });
 
 export const config = Env.parse(process.env);

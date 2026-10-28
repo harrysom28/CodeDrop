@@ -40,7 +40,9 @@ async function withServer(fn: (base: string) => Promise<void>) {
 test('health lists supported bookies', () =>
   withServer(async (base) => {
     const r = await fetch(`${base}/health`);
-    assert.deepEqual(await r.json(), { ok: true, bookies: ['sportybet'] });
+    const body = (await r.json()) as { ok: boolean; bookies: string[] };
+    assert.equal(body.ok, true);
+    assert.deepEqual(body.bookies, ['sportybet']);
   }));
 
 test('preview resolves a code, 404s a dead one, 400s an unknown bookie', () =>
