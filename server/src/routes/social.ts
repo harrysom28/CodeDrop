@@ -7,7 +7,8 @@ import { Channel, Follow, PickModel, SpottedSlip, User } from '../models/index.j
 import { HttpError } from '../errors.js';
 import { requireAdmin, requireUser } from '../middleware/auth.js';
 import { channelRecordFor, startChannelClaim } from '../services/claim.js';
-import { presentPick } from '../services/picks.js';
+import { annotate, consistentFeed, rankFeed } from '../core/quality.js';
+import { pickCandidates, recentWinners, spottedCandidates } from '../services/feed.js';
 
 function idParam(v: unknown, what: string): Types.ObjectId {
   if (typeof v !== 'string' || !Types.ObjectId.isValid(v)) throw new HttpError(404, `${what} not found`);
@@ -32,32 +33,47 @@ export function socialRouter() {
   const r = Router();
 
   // ── Feed ──────────────────────────────────────────────────────────────────
+  // Ranking and labels live in core/quality.ts. Nothing is hidden for being low quality: weaker
+  // sources sink and carry an honest label, so the feed is never empty in the early days.
   r.get('/feed', async (req, res) => {
-    const tab = z.enum(['all', 'following', 'trending', 'spotted']).default('all').parse(req.query.tab);
+    const tab = z.enum(['all', 'consistent', 'following', 'trending', 'spotted']).default('all').parse(req.query.tab);
     const now = new Date();
+    const viewer = { userId: req.userId };
+    const upcoming = { firstKickoff: { $gt: now }, result: 'pending' };
 
     if (tab === 'spotted') {
-      const items = await SpottedSlip.find({ firstKickoff: { $gt: now } })
-        .sort({ 'firstSighting.postedAt': -1 })
-        .limit(50)
-        .lean();
-      return res.json({ tab, items: items.map((s) => ({ ...s, verification: 'unverified' })) });
+      return res.json({ tab, items: rankFeed(await spottedCandidates(now), now) });
     }
 
-    const filter: Record<string, unknown> = { firstKickoff: { $gt: now }, result: 'pending' };
     if (tab === 'following') {
       if (!req.userId) throw new HttpError(401, 'Sign in to see who you follow');
       const follows = await Follow.find({ followerId: req.userId }, { tipsterId: 1 }).lean();
-      filter.tipsterId = { $in: follows.map((f) => f.tipsterId) };
+      const picks = await pickCandidates({ ...upcoming, tipsterId: { $in: follows.map((f) => f.tipsterId) } }, viewer);
+      return res.json({ tab, items: rankFeed(picks, now) });
     }
-    const picks = await PickModel.find(filter)
-      .sort(tab === 'trending' ? { copyCount: -1 } : { lockedAt: -1 })
-      .limit(50)
-      .lean();
-    res.json({
-      tab,
-      items: picks.map((p) => presentPick(p, { isOwner: !!req.userId?.equals(p.tipsterId), isSubscriber: false })),
-    });
+
+    const [picks, spotted] = await Promise.all([pickCandidates(upcoming, viewer), spottedCandidates(now)]);
+
+    if (tab === 'consistent') {
+      const out = consistentFeed([...picks, ...spotted], now);
+      return res.json({ tab, ...out });
+    }
+
+    if (tab === 'trending') {
+      // Most copied picks, then slips posted by the most channels.
+      const heat = (c: (typeof picks)[number]) =>
+        c.kind === 'pick' ? Number(c.item.copyCount ?? 0) * 3 : Number(c.item.alsoPostedBy ?? 0);
+      const ranked = [...picks, ...spotted].sort((a, b) => heat(b) - heat(a)).slice(0, 50);
+      return res.json({ tab, items: ranked.map((c) => annotate(c, now)) });
+    }
+
+    res.json({ tab, items: rankFeed([...picks, ...spotted], now) });
+  });
+
+  /** "Recent verified winners" strip at the top of the feed. */
+  r.get('/feed/winners', async (req, res) => {
+    const hours = z.coerce.number().int().min(6).max(168).default(36).parse(req.query.hours);
+    res.json(await recentWinners(new Date(), hours));
   });
 
   // ── Follows ───────────────────────────────────────────────────────────────

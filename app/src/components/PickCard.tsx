@@ -1,4 +1,5 @@
 import { Badge, badgeFromVerification } from '@/components/Badge';
+import { QualityLine, type Quality } from '@/components/Quality';
 import { Body, Button, Card, Mono } from '@/components/ui';
 import { theme } from '@/theme';
 import { router } from 'expo-router';
@@ -52,6 +53,7 @@ export function PickCard({
                 </View>
               ))
           : null}
+        {!closed ? <QualityLine quality={pick.quality as Quality | undefined} /> : null}
         <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 12, gap: 8 }}>
           <View style={{ flex: 1 }}>
             {started ? (
@@ -74,19 +76,58 @@ export function PickCard({
   );
 }
 
-export function SpottedCard({ item }: { item: Record<string, unknown> }) {
-  const sighting = (item.firstSighting ?? {}) as { channel?: string; url?: string; code?: string };
-  const slip = (item.slip ?? {}) as { code?: string; legs?: unknown[] };
+export function SpottedCard({ item, lowData }: { item: Record<string, unknown>; lowData?: boolean }) {
+  const sighting = (item.firstSighting ?? {}) as { channel?: string; url?: string; code?: string; bookie?: string };
+  const slip = (item.slip ?? {}) as {
+    code?: string;
+    legs?: Array<{ homeTeam?: string; awayTeam?: string; selection?: string; odds?: number }>;
+  };
+  const legs = Array.isArray(slip.legs) ? slip.legs : [];
+  const odds = Number(item.totalOdds ?? 0);
+  const others = Number(item.alsoPostedBy ?? 0);
+  const kickoff = item.firstKickoff ? new Date(String(item.firstKickoff)) : null;
   return (
     <Card dashed style={{ marginBottom: theme.space[3] }}>
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-        <Body>{String(sighting.channel ?? 'channel')}</Body>
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Body style={{ flex: 1 }}>
+          {String(sighting.channel ?? 'channel')}
+          {others > 0 ? ` · +${others} other channel${others === 1 ? '' : 's'}` : ''}
+        </Body>
         <Badge kind="unverified" />
       </View>
-      <View style={{ backgroundColor: theme.surfaceSunken, borderRadius: 12, padding: 12, marginTop: 10 }}>
-        <Mono>{String(slip.code ?? sighting.code ?? '')}</Mono>
+      <View
+        style={{
+          backgroundColor: theme.surfaceSunken,
+          borderRadius: 12,
+          padding: 12,
+          marginTop: 10,
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+        }}
+      >
+        <View>
+          <Body muted style={{ fontSize: 13 }}>
+            {String(sighting.bookie ?? 'Booking')} code · {legs.length} leg{legs.length === 1 ? '' : 's'}
+          </Body>
+          <Mono style={{ fontSize: 18 }}>{String(slip.code ?? sighting.code ?? '')}</Mono>
+        </View>
+        <Mono style={{ fontSize: 16 }}>{odds ? odds.toFixed(2) : ''}</Mono>
       </View>
-      <Body muted style={{ marginTop: 8 }}>{Array.isArray(slip.legs) ? `${slip.legs.length} legs` : 'View legs'}</Body>
+      {!lowData
+        ? legs.slice(0, 3).map((l, i) => (
+            <View key={i} style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 6 }}>
+              <Body style={{ flex: 1 }}>
+                {l.homeTeam} vs {l.awayTeam}
+                {l.selection ? ` · ${l.selection}` : ''}
+              </Body>
+              <Mono style={{ color: theme.textMuted }}>{Number(l.odds ?? 0).toFixed(2)}</Mono>
+            </View>
+          ))
+        : null}
+      {!lowData && legs.length > 3 ? <Body muted style={{ marginTop: 4 }}>+{legs.length - 3} more legs</Body> : null}
+      <QualityLine quality={item.quality as Quality | undefined} />
+      {kickoff ? <Body muted style={{ marginTop: 6 }}>{countdown(kickoff)}</Body> : null}
     </Card>
   );
 }

@@ -106,3 +106,15 @@ docker compose up --build
 ```
 
 Dokploy services: `api` (`GET /health`), `worker`, `listener`. Compose Mongo/Redis are for local/staging.
+
+## Feed quality (`server/src/core/quality.ts`)
+
+The feed ranks and labels slips; it never hides them for being low quality, so it isn't empty in the early days.
+
+- **Source tiers:** a channel's or tipster's settled record decides `new` / `tracking` / `proven`. Proven needs 15+ results and a better-than-prior hit rate, or any profit. Everyone starts at a neutral prior, so a new source ranks above one with a bad record.
+- **Chance:** every card shows the implied win chance (1 ÷ total odds).
+- **Ranking:** source quality first, then chance, then freshness. Slips posted by several channels use the best channel's record.
+- **Consistent tab:** 1–4 legs, each leg 1.15–2.10, total under 6. If fewer than 10 qualify, the rules relax and the app shows a note.
+- **Winners strip:** `GET /feed/winners`, the last 36 hours of wins, widening to 7 days when quiet.
+
+All thresholds are in `QUALITY`; tighten them once there's enough settled data.
