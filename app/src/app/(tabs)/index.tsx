@@ -9,10 +9,16 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, RefreshControl, ScrollView, Text, View } from 'react-native';
 
-const TABS = ['following', 'trending', 'spotted'] as const;
+const TABS = ['all', 'following', 'trending', 'spotted'] as const;
+const TAB_LABELS: Record<(typeof TABS)[number], string> = {
+  all: 'All',
+  following: 'Following',
+  trending: 'Trending',
+  spotted: 'Spotted',
+};
 
 export default function FeedScreen() {
-  const [tab, setTab] = useState<(typeof TABS)[number]>('trending');
+  const [tab, setTab] = useState<(typeof TABS)[number]>('all');
   const lowData = useSession((s) => s.lowData);
   const q = useQuery({
     queryKey: ['feed', tab],
@@ -43,7 +49,12 @@ export default function FeedScreen() {
           <Text style={{ color: theme.accentOn, fontFamily: theme.font.uiSemi, fontSize: 22 }}>+</Text>
         </Pressable>
       </View>
-      <View style={{ flexDirection: 'row', gap: 8, paddingHorizontal: 16, paddingVertical: 12 }}>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        style={{ flexGrow: 0 }}
+        contentContainerStyle={{ gap: 8, paddingHorizontal: 16, paddingVertical: 12 }}
+      >
         {TABS.map((t) => (
           <Pressable
             key={t}
@@ -56,12 +67,10 @@ export default function FeedScreen() {
               justifyContent: 'center',
             }}
           >
-            <Text style={{ color: tab === t ? theme.accentOn : theme.text, fontFamily: theme.font.uiMed, textTransform: 'capitalize' }}>
-              {t}
-            </Text>
+            <Text style={{ color: tab === t ? theme.accentOn : theme.text, fontFamily: theme.font.uiMed }}>{TAB_LABELS[t]}</Text>
           </Pressable>
         ))}
-      </View>
+      </ScrollView>
       {q.isError && (q.error as ApiError).status === 0 ? (
         <View style={{ backgroundColor: theme.warnSurface, padding: 12, marginHorizontal: 16, borderRadius: 12 }}>
           <Body style={{ color: theme.warn }}>No connection. Showing odds from cache. Retry.</Body>
@@ -72,7 +81,16 @@ export default function FeedScreen() {
       ) : q.isError && !q.data ? (
         <ErrorState message={(q.error as Error).message} onRetry={() => void q.refetch()} />
       ) : !q.data?.items.length ? (
-        <Empty title="Nothing here yet" body="Follow tipsters or switch to Spotted for public codes." />
+        <Empty
+          title="Nothing here yet"
+          body={
+            tab === 'following'
+              ? 'Follow tipsters or switch to All / Spotted for public codes.'
+              : tab === 'spotted'
+                ? 'No public codes spotted yet.'
+                : 'No slips yet. Post a pick or check Spotted for public codes.'
+          }
+        />
       ) : (
         <ScrollView
           contentContainerStyle={{ padding: 16, paddingBottom: 40 }}

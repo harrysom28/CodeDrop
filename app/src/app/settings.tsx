@@ -11,7 +11,9 @@ export default function Settings() {
   return (
     <Screen>
       <Title style={{ fontSize: 22 }}>Settings</Title>
-      <Body style={{ marginTop: 8 }}>Main bookie: {user?.mainBookie ?? '—'}</Body>
+      <Body style={{ marginTop: 8 }}>
+        Bookies: {user?.favouriteBookies?.length ? user.favouriteBookies.join(', ') : (user?.mainBookie ?? '—')}
+      </Body>
       <Body>Unit size: ₦{user?.unitNaira ?? 1000}</Body>
       <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 20 }}>
         <Body style={{ flex: 1 }}>Low-data mode (text-only cards)</Body>

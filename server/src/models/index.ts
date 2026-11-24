@@ -39,6 +39,7 @@ const UserSchema = new Schema(
     idProviderRef: String,
     over18Confirmed: { type: Boolean, default: false },
     mainBookie: { type: String, enum: BOOKIES },
+    favouriteBookies: { type: [{ type: String, enum: BOOKIES }], default: [] },
     favouriteClubs: [String],
     /** What 1 unit means in naira for this user's own stake suggestions. */
     unitNaira: { type: Number, default: 1000 },

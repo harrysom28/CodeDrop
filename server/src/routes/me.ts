@@ -7,12 +7,17 @@ import { HttpError } from '../errors.js';
 import { requireUser } from '../middleware/auth.js';
 import { assertValidHandle, normalizeHandle, presentUser } from '../services/users.js';
 
-const Onboarding = z.object({
-  over18Confirmed: z.literal(true),
-  favouriteClubs: z.array(z.string().trim().min(1).max(80)).max(20).default([]),
-  mainBookie: z.enum(BOOKIES),
-  unitNaira: z.number().int().min(100).max(1_000_000).default(1000),
-});
+const Onboarding = z
+  .object({
+    over18Confirmed: z.literal(true),
+    favouriteClubs: z.array(z.string().trim().min(1).max(80)).max(20).default([]),
+    mainBookie: z.enum(BOOKIES).optional(),
+    favouriteBookies: z.array(z.enum(BOOKIES)).min(1).max(BOOKIES.length).optional(),
+    unitNaira: z.number().int().min(100).max(1_000_000).default(1000),
+  })
+  .refine((v) => Boolean(v.mainBookie) || (v.favouriteBookies && v.favouriteBookies.length > 0), {
+    message: 'Pick at least one bookie',
+  });
 
 const PatchMe = z
   .object({
@@ -46,13 +51,16 @@ export function meRouter() {
 
   r.post('/me/onboarding', requireUser, async (req, res) => {
     const body = Onboarding.parse(req.body);
+    const favouriteBookies = [...new Set(body.favouriteBookies?.length ? body.favouriteBookies : [body.mainBookie!])];
+    const mainBookie = favouriteBookies[0];
     const user = await User.findByIdAndUpdate(
       req.userId,
       {
         $set: {
           over18Confirmed: true,
           favouriteClubs: body.favouriteClubs,
-          mainBookie: body.mainBookie,
+          mainBookie,
+          favouriteBookies,
           unitNaira: body.unitNaira,
           onboardedAt: new Date(),
         },

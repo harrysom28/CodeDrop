@@ -56,6 +56,7 @@ export function presentUser(user: {
   idVerified: boolean;
   over18Confirmed: boolean;
   mainBookie?: string | null;
+  favouriteBookies?: string[] | null;
   favouriteClubs?: string[] | null;
   unitNaira?: number | null;
   onboardedAt?: Date | null;
@@ -71,6 +72,12 @@ export function presentUser(user: {
     idVerified: user.idVerified,
     over18Confirmed: user.over18Confirmed,
     mainBookie: user.mainBookie ?? null,
+    favouriteBookies:
+      user.favouriteBookies && user.favouriteBookies.length
+        ? user.favouriteBookies
+        : user.mainBookie
+          ? [user.mainBookie]
+          : [],
     favouriteClubs: user.favouriteClubs ?? [],
     unitNaira: user.unitNaira ?? 1000,
     onboardedAt: user.onboardedAt ?? null,

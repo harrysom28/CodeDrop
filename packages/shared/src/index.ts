@@ -23,12 +23,17 @@ export type Leg = z.infer<typeof LegSchema>;
 
 export const SlipResultSchema = z.enum(['pending', 'won', 'lost', 'void']);
 
-export const OnboardingBody = z.object({
-  over18Confirmed: z.literal(true),
-  favouriteClubs: z.array(z.string()).max(20).default([]),
-  mainBookie: BookieSchema,
-  unitNaira: z.number().int().min(100).max(1_000_000).default(1000),
-});
+export const OnboardingBody = z
+  .object({
+    over18Confirmed: z.literal(true),
+    favouriteClubs: z.array(z.string()).max(20).default([]),
+    mainBookie: BookieSchema.optional(),
+    favouriteBookies: z.array(BookieSchema).min(1).max(BOOKIES.length).optional(),
+    unitNaira: z.number().int().min(100).max(1_000_000).default(1000),
+  })
+  .refine((v) => Boolean(v.mainBookie) || (v.favouriteBookies && v.favouriteBookies.length > 0), {
+    message: 'Pick at least one bookie',
+  });
 
 export const PatchMeBody = z.object({
   handle: z.string().trim().min(3).max(20).optional(),
@@ -44,6 +49,7 @@ export const UserSchema = z.object({
   idVerified: z.boolean(),
   over18Confirmed: z.boolean(),
   mainBookie: z.string().nullable(),
+  favouriteBookies: z.array(z.string()).default([]),
   favouriteClubs: z.array(z.string()),
   unitNaira: z.number(),
   onboardedAt: z.coerce.date().nullable().optional(),

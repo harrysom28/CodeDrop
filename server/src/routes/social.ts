@@ -33,7 +33,7 @@ export function socialRouter() {
 
   // ── Feed ──────────────────────────────────────────────────────────────────
   r.get('/feed', async (req, res) => {
-    const tab = z.enum(['following', 'trending', 'spotted']).default('following').parse(req.query.tab);
+    const tab = z.enum(['all', 'following', 'trending', 'spotted']).default('all').parse(req.query.tab);
     const now = new Date();
 
     if (tab === 'spotted') {

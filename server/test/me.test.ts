@@ -74,7 +74,23 @@ test('dev auth: onboarding, get me, patch handle', () =>
 
     const me = await fetch(`${base}/me`, { headers: { 'x-user-id': user.id } });
     assert.equal(me.status, 200);
-    assert.equal(((await me.json()) as { mainBookie: string }).mainBookie, 'sportybet');
+    const meBody = (await me.json()) as { mainBookie: string; favouriteBookies: string[] };
+    assert.equal(meBody.mainBookie, 'sportybet');
+    assert.deepEqual(meBody.favouriteBookies, ['sportybet']);
+
+    const two = await fetch(`${base}/me/onboarding`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        over18Confirmed: true,
+        favouriteBookies: ['bet9ja', 'sportybet'],
+        unitNaira: 2000,
+      }),
+    });
+    assert.equal(two.status, 200);
+    const twoBody = (await two.json()) as { mainBookie: string; favouriteBookies: string[] };
+    assert.equal(twoBody.mainBookie, 'bet9ja');
+    assert.deepEqual(twoBody.favouriteBookies, ['bet9ja', 'sportybet']);
 
     const badHandle = await fetch(`${base}/me`, {
       method: 'PATCH',
