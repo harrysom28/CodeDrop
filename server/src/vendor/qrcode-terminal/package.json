@@ -1,0 +1,7 @@
+{
+  "name": "qrcode-terminal-vendored",
+  "version": "0.12.0",
+  "type": "commonjs",
+  "main": "./lib/main.js",
+  "license": "Apache-2.0"
+}
